@@ -1,0 +1,197 @@
+AWK for JonnyKC
+===============
+
+== Background
+
+link:https://en.wikipedia.org/wiki/AWK[AWK] is a data-driven language named
+after the initials of the three classic computer scientists who authored
+it (Aho, Weinberger, and Kernighan). Its general use-case falls along this
+pattern:
+
+____
+Iterate line-by-line through a text file. For each line, discern whether it
+matches a pattern criteria then, if so, apply specified actions.
+____
+
+The purpose of this brief write-up is to demonstrate how one could have used
+AWK to solve the ``use VIM to extract a block of lines from a file'' problem
+you were describing during our boys' night.
+
+== General Ideas
+
+One invokes AWK as:
+
+----
+$ awk 'program' file... 
+----
+
+The AWK program consists of patterns and actions. You may optionally place the
+program into its own file, then invoke as:
+
+----
+$ awk -f myawkprogram file...
+----
+
+In either case, once the AWK interpreter is invoked, it ingests each `file`
+argument, then feeds every line to the program, one-by-one, thereby permitting
+patterns to be matched and associated actions to be taken.
+
+An AWK program can be visualized simply as:
+
+----
+pattern { action... }
+pattern { action... }
+pattern { action... }
+pattern { action... }
+...
+----
+
+Thus, an AWK program is a series of pattern-action pairs to which *every*
+line of the input is subjected.
+
+== Sample Data
+
+For the examples in this write-up, the following file `mydata` contains:
+
+----
+1 Partridge in the Pear Tree
+2 Turtle Doves
+3 French hens
+4 Calling Birds
+5 Golden Rings
+6 Geese A-laying
+7 Swans A-swimming
+8 Maids A-milking
+9 Ladies Dancing
+10 Lords A-leaping
+11 Pipers Piping
+12 Drummers Drumming
+----
+
+== Examples
+
+=== Print all lines
+
+----
+$ awk '{print}' mydata
+
+1 Partridge in the Pear Tree
+2 Turtle Doves
+3 French hens
+4 Calling Birds
+5 Golden Rings
+6 Geese A-laying
+7 Swans A-swimming
+8 Maids A-milking
+9 Ladies Dancing
+10 Lords A-leaping
+11 Pipers Piping
+12 Drummers Drumming
+----
+
+In this case, the pattern is not specified, which means ``apply the action to
+all lines.'' The simple `{print}` action therefore acts upon every line.
+
+=== Print lines matching simple pattern
+
+----
+$ awk '/Geese/' mydata
+
+6 Geese A-laying
+----
+
+In this case, the regex pattern `/Geese/` is searched for; because no actions
+are specified, the default action of `{print}` is applied.
+
+=== Reference fields within pattern
+
+AWK automatically tokenizes each line into space-delimited fields, then
+numbers them `$1`, `$2`, ..., `$NF` (where "NF" signifies "number of fields"). So,
+if you want to print the lines whose first field is `10`:
+
+----
+$ awk '$1 == 10' mydata
+
+10 Lords A-leaping
+----
+
+Or print lines whose first field is less than `5`:
+
+----
+$ awk '$1 < 5' mydata
+
+1 Partridge in the Pear Tree
+2 Turtle Doves
+3 French hens
+4 Calling Birds
+----
+
+=== Print lines matching regex
+
+----
+$ awk '/an/' mydata
+
+7 Swans A-swimming
+9 Ladies Dancing
+----
+
+=== Print absolute line-numbers
+
+AWK thinks of each line as a "record" (with each record consisting of
+"fields"). To print a block of lines with absolute line-numbers ranging from 5
+to 10, reference the `NR` variable ("number of record") in the pattern:
+
+----
+$ awk 'NR==5,NR==10' mydata
+
+5 Golden Rings
+6 Geese A-laying
+7 Swans A-swimming
+8 Maids A-milking
+9 Ladies Dancing
+10 Lords A-leaping
+----
+
+In this example, `NR==5` means ``the line whose record-number is 5'' ---
+likewise for the `NR==10`. Because the patterns are separated with a comma,
+the first pattern represents the line for which the action should *start*
+operating; the second pattern represents the line for which the action should
+*stop*. Thus, we specify a "range of a block of lines" by specifying two
+patterns separated by a comma. The patterns can be regexes:
+
+----
+$ awk '/hen/,/Maid/' mydata
+
+3 French hens
+4 Calling Birds
+5 Golden Rings
+6 Geese A-laying
+7 Swans A-swimming
+8 Maids A-milking
+----
+
+== A Parting Example
+
+AWK is incredibly powerful. For example, people have written assemblers and
+interpreters from AWK. The action block `{ ... }` can be many lines long whose
+syntax is C-like and permissive of complex operations.
+
+This final example demonstrates summing up the integers at the beginning of
+`mydata`:
+
+----
+$ awk '{ sum += $1 } END { print sum }' mydata
+78
+----
+
+No pattern is supplied which means to apply the action to every line. The
+per-line action say, ``add to `sum` the value of the first field''. Thus,
+`sum` is incremented by each line by the amount of the first field. Finally,
+an `END` action is performed (i.e., after all input lines have been ingested)
+which prints the accumulated `sum`.
+
+
+== See Also
+
+* link:https://www.gnu.org/software/gawk/manual/gawk.html[GNU AWK's User Manual]
+* link:https://www.amazon.com/AWK-Programming-Language-Alfred-Aho/dp/020107981X/[The AWK Programming Language] (Fun fact: I paid $100 for this book because it was personally authored by Brian Kernighan. It is a classic and a joy to read.)
