@@ -185,7 +185,7 @@ $ awk '{ sum += $1 } END { print sum }' mydata
 ----
 
 No pattern is supplied which means to apply the action to every line. The
-per-line action say, ``add to `sum` the value of the first field''. Thus,
+per-line action says, ``add to `sum` the value of the first field''. Thus,
 `sum` is incremented by each line by the amount of the first field. Finally,
 an `END` action is performed (i.e., after all input lines have been ingested)
 which prints the accumulated `sum`.
